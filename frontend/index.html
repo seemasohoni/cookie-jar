@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie Jar - Habit App</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Cookie Jar 🍪</h1>
+            <p>Master your habits, fill your jar</p>
+        </header>
+
+        <main class="dashboard">
+            <section class="card cookie-section">
+                <h2>Your Cookie Jar</h2>
+                <div class="jar-container">
+                    <div class="jar">
+                        <div class="jar-lid"></div>
+                        <div class="jar-glass">
+                            <div class="cookies" id="cookie-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats">
+                    <div class="stat-box">
+                        <span class="stat-label">Total Cookies</span>
+                        <h3 id="total-cookies">0</h3>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Next Milestone</span>
+                        <h3 id="progress-cookies">0 / 100</h3>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card graph-section" style="grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div style="grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2>Pattern Analyzer</h2>
+                        <p class="subtitle">Understand exactly when and why you log your habits</p>
+                    </div>
+                    <div>
+                        <select id="habit-filter" class="form-input" style="width: 250px;">
+                            <option value="">All Habits</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <h3 style="margin: 0;">Vulnerability Zones (Bad Habits)</h3>
+                        <select id="timescale-filter" class="form-input" style="width: 150px; padding: 0.25rem 0.5rem; font-size: 0.85rem;">
+                            <option value="all">All Time</option>
+                            <option value="month">Last Month</option>
+                            <option value="week">Last 7 Days</option>
+                            <option value="day">Last 24 Hours</option>
+                        </select>
+                    </div>
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="vulnerabilityChart"></canvas>
+                    </div>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div>
+                        <h3>Time of Day Pattern</h3>
+                        <div class="chart-container" style="height: 150px;">
+                            <canvas id="timeOfDayChart"></canvas>
+                        </div>
+                    </div>
+                    <div>
+                        <h3>External Triggers</h3>
+                        <div class="chart-container" style="height: 150px;">
+                            <canvas id="triggerTypeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card habits-section" style="grid-column: 1 / -1;">
+                <h2>Your Habits</h2>
+                <form id="create-habit-form" class="habit-form">
+                    <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+                        <input type="text" id="new-habit-name" placeholder="Habit Name" required class="form-input" style="flex: 2;">
+                        <select id="new-habit-category" class="form-input" style="flex: 1;">
+                            <option value="GOOD">Good Habit</option>
+                            <option value="BAD">Bad Habit</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary">Create</button>
+                    </div>
+                </form>
+                <div id="habits-list" class="habits-list">
+                    <!-- Dynamic habits will go here -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Log Modal -->
+    <div id="log-modal" class="modal hidden">
+        <div class="modal-content card">
+            <h2>Log Habit</h2>
+            <form id="log-habit-form">
+                <input type="hidden" id="log-habit-id">
+                <input type="hidden" id="log-habit-category">
+                <div class="form-group">
+                    <label>Time</label>
+                    <input type="datetime-local" id="log-time" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Trigger</label>
+                    <select id="log-trigger" class="form-input" required style="margin-bottom: 0.5rem;">
+                        <option value="MANUAL">Manual</option>
+                        <option value="TIME">Time</option>
+                        <option value="LOCATION">Location</option>
+                        <option value="SOCIAL">Social</option>
+                        <option value="CUSTOM">Custom...</option>
+                    </select>
+                    <input type="text" id="log-trigger-custom" class="form-input hidden" placeholder="Enter custom trigger (e.g. Song, Memory)">
+                </div>
+                <div class="actions" style="margin-top: 2rem;">
+                    <button type="button" class="btn btn-danger" onclick="closeLogModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Log</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Habit Modal -->
+    <div id="edit-habit-modal" class="modal hidden">
+        <div class="modal-content card">
+            <h2>Edit Habit</h2>
+            <form id="edit-habit-form">
+                <input type="hidden" id="edit-habit-id">
+                <div class="form-group">
+                    <label>Habit Name</label>
+                    <input type="text" id="edit-habit-name" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="edit-habit-category" class="form-input" required>
+                        <option value="GOOD">Good Habit</option>
+                        <option value="BAD">Bad Habit</option>
+                    </select>
+                </div>
+                <div class="actions" style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                    <button type="button" class="btn" style="background-color: transparent; color: #ef4444; border: 1px solid #ef4444;" onclick="deleteHabit()">Delete Habit</button>
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="button" class="btn btn-danger" onclick="closeEditModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
